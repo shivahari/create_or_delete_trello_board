@@ -43,7 +43,7 @@ token = '<yout_token>'
 
 board_name = '<board_name>'
 
-members = ['']
+members = []
 
 -----
 How to run
