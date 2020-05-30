@@ -38,9 +38,18 @@ d) members - The members list needed to be added to the Board
 Sample values inside a conf.py file
 
 key = '<your_key>'
+
 token = '<yout_token>'
+
 board_name = '<board_name>'
+
 members = ['']
+
+-----
+How to run
+-----
+
+python3 ./trello.py --create
 
 
 
