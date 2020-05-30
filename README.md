@@ -29,7 +29,7 @@ Create a conf.py file and add the following paramters
 
 a) key - App key from https://trello.com/app-key
 
-b) token - Token from https://trello.com/1/token/approve 
+b) token - Token generated from a redirect in previous step 
 
 c) board_name - The name of the Board to be created
 
