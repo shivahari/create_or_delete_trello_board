@@ -105,17 +105,20 @@ class Trello():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--create", dest='create', action='store_true', default=False, help='--create will create a new board')
-    parser.add_argument("--key", dest='key', default=None)
-    parser.add_argument("--token", dest='token', default=None)
-    parser.add_argument("--board-name", dest='board_name', default=None)
-    parser.add_argument("--members", dest='members', nargs='+', default=[], help='Add memebers to the Trello board, pass multiple names separated by space')
-
+    parser.add_argument("--board-name", dest='board_name', default="Trello Board GH Actions")
     args = parser.parse_args()
+
+	# Get the key & token from env vars
+    key = os.environ.get("TRELLO_KEY")
+    token = os.environ.get("TRELLO_TOKEN")
+    members = os.environ.get("TRELLO_MEMBERS") # should be a comma seperated value
+    members = members.split(',')
+
     if args.create:
         trello_obj = None
         try:
-            if args.key and args.token and args.board_name and args.members:
-                trello_obj = Trello(key=args.key, token=args.token, board_name=args.board_name, members=args.members)
+            if key and token and args.board_name and members:
+                trello_obj = Trello(key=key, token=token, board_name=args.board_name, members=members)
             else:
                 import conf # Conf file to hold key,token,board_name & members list
                 trello_obj = Trello(key=conf.key, token=conf.token, board_name=conf.board_name, members=conf.members)
