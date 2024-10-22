@@ -4,7 +4,7 @@ name: Create Trello Board
 on:
   push:
     branches:
-      - main
+      - master
 
 # Define the jobs that will be run
 jobs:
