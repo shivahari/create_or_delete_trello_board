@@ -1,4 +1,8 @@
-#! /usr/bin/python3
+"""
+This module house Trello object to:
+1. Create a new Trello board
+2. Add new members to the Trello board
+"""
 
 import argparse
 import os
@@ -6,126 +10,91 @@ from loguru import logger
 import requests
 
 class Trello():
-    "Trello Class to create/delete boards and add members to the board"
-    def __init__(self, key, token, board_name, members):
-        "Initialize Trello class"
+    "Trello Object to create boards and add members to the board"
+
+    def __init__(self, key:str=None, token:str=None) -> None:
+        """
+        Initialize Trello class
+        Parameters:
+            key: Trello Key
+            token: Trello Token
+        Returns:
+        """
+        self.key = key
+        self.token = token
+
+    def create_board(self, board_name:str) -> str: # pylint: disable=inconsistent-return-statements
+        """
+        Create a new board on Trello
+        Parameters:
+            board_name: New Trello board name
+        Returns:
+            board_id: Board ID for the new Trello board
+        """
+        params = {'key':self.key, 'token':self.token, 'name':board_name}
+        url = 'https://api.trello.com/1/boards/'
         try:
-            self.key = key
-            self.token = token
-            self.board_name = board_name
-            self.members = members
-            self.new_board_id = None
-        except Exception as e:
-            logger.critical("Unable to read from conf file.\n Please make sure you have a conf.py file with \
-                    \n1. key - App key from https://trello.com/app-key \
-                    \n2. token - Token from https://trello.com/1/token/approve \
-                    \n3. board_name - The name of the Board to be created  \
-                    \n4. members - The members needed to be added to the Board")
-    
-        #Create a log dir
-        try:
-            if not os.path.exists('./log'):
-                os.mkdir('log')
-            logger.add('./log/file-{time}.log', format='{name} {message}', rotation='5 MB')
-        except Exception as e:
-            logger.critical(str(e))
+            response = requests.post(url=url, params=params)
+            response.raise_for_status()
+            logger.success(f"Successfully created Board - {board_name}")
+            board_id = response.json()['id']
+            return board_id
+        except Exception as create_board_err: # pylint: disable=broad-except
+            logger.exception("Unable to create new Board")
+            logger.exception(str(create_board_err))
 
-
-    def get_boards(self):
-        "Get the Boards associated with the user"
-        all_boards = None
-        params = {'key':self.key, 'token':self.token, 'fields':'name'}
-        url = 'https://api.trello.com/1/members/me/boards'
-        try:
-            response = requests.get(url=url, params=params)
-            result_flag = True if response.status_code == 200 else False
-            self.log_result(result_flag, "Successfully Obtained Board names", 
-                                "Failed to get the Board names")
-            if result_flag:
-                all_boards = response.json()
-        except Exception as e:
-            logger.exception("Unable to Get the Boards")
-            logger.exception(str(e))
-        finally:
-            return all_boards
-
-
-    def create_board(self):
-        "Create a new board on Trello"
-        if self.board_name:
-            params = {'key':self.key, 'token':self.token, 'name':self.board_name}
-            url = 'https://api.trello.com/1/boards/'
+    def add_members_to_board(self, board_id:str, members:list) -> None:
+        """
+        Add members to a Board
+        Parameters:
+            board_id: Board ID of the newly created board
+            members: List of members
+        Returns:
+        """
+        for account in members:
+            params = {'key':self.key, 'token':self.token}
             try:
-                response = requests.post(url=url, params=params)
-                result_flag = True if response.status_code == 200 else False
-                self.log_result(result_flag, "Successfully created Board - %s"%self.board_name, 
-                                    "Failed to create new Board")
-                if result_flag:
-                    self.new_board_id = response.json()['id']
-                self.add_members()
-            except Exception as e:
-                logger.exception("Unable to create new Board")
-                logger.exception(str(e))
+                #Get the member ID using email ID
+                get_member_id = requests.get(url=f"https://api.trello.com/1/members/{account}",
+                                             params=params)
+                if get_member_id.status_code == 200:
+                    logger.success(f"Successfully attained member ID for {account}")
+                else:
+                    logger.error(f"Failed to attain member ID for {account}")
+                    continue
+                member_id = get_member_id.json()['id']
 
-
-    def add_members(self):
-        "Add members to a Board"
-        if self.new_board_id:
-            for account in self.members:
-                params = {'key':self.key, 'token':self.token}
-                try:
-                    #Get the member ID using email ID
-                    get_member_id = requests.get(url='https://api.trello.com/1/members/%s'%account, params=params)
-                    result_flag = True if get_member_id.status_code == 200 else False
-                    self.log_result(result_flag, "Successfully attained member ID for %s"%account, 
-                                        "Failed to get member ID for %s"%account)
-                    member_id = None
-                    if get_member_id.status_code == 200:
-                        member_id = get_member_id.json()['id']
-                    if member_id:
-                        url = 'https://api.trello.com/1/boards/%s/members/%s'%(self.new_board_id, member_id)
-                        params = {'key':self.key, 'token':self.token, 'type':'normal'}
-                        response = requests.put(url=url, params=params)
-                        result_flag = True if response.status_code == 200 else False
-                        self.log_result(result_flag, "Sucessfully added %s to Board %s"%(account,self.board_name),
-                                            "Failed to add %s to Board %s"%(account,self.board_name))
-                except Exception as e:
-                    logger.exception("Unable to add member - %s"%account)
-                    logger.exception(str(e))
-
-
-    def log_result(self, result_flag, success_msg, failure_msg):
-        "Log results using loguru"
-        if result_flag:
-            logger.success(success_msg)
-        else:
-            logger.error(failure_msg)
-
+                # Add member to the board
+                url = f"https://api.trello.com/1/boards/{board_id}/members/{member_id}"
+                params = {'key':self.key, 'token':self.token, 'type':'normal'}
+                response = requests.put(url=url, params=params)
+                response.raise_for_status()
+                logger.success(f"Sucessfully added {account} to new board")
+            except Exception as add_member_err: # pylint: disable=broad-except
+                logger.exception(f"Unable to add member - {account}")
+                logger.exception(str(add_member_err))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--create", dest='create', action='store_true', default=False, help='--create will create a new board')
-    parser.add_argument("--board-name", dest='board_name', default="Trello Board GH Actions")
+    parser.add_argument("--create",
+                        dest='create',
+                        action='store_true',
+                        default=False,
+                        help='--create will create a new board')
     args = parser.parse_args()
 
-	# Get the key & token from env vars
-    key = os.environ.get("TRELLO_KEY")
-    token = os.environ.get("TRELLO_TOKEN")
-    members = os.environ.get("TRELLO_MEMBERS") # should be a comma seperated value
-    members = members.split(',')
+	# Get the key, token, members & board_name from env
+    TRELLO_KEY = os.environ.get("TRELLO_KEY")
+    TRELLO_TOKEN = os.environ.get("TRELLO_TOKEN")
+    TRELLO_MEMBERS = os.environ.get("TRELLO_MEMBERS") # should be a comma seperated value
+    TRELLO_MEMBERS = TRELLO_MEMBERS.split(',')
+    TRELLO_BOARD_NAME = "Test Board"
 
     if args.create:
-        trello_obj = None
-        try:
-            if key and token and args.board_name and members:
-                trello_obj = Trello(key=key, token=token, board_name=args.board_name, members=members)
-            else:
-                import conf # Conf file to hold key,token,board_name & members list
-                trello_obj = Trello(key=conf.key, token=conf.token, board_name=conf.board_name, members=conf.members)
-            
-            if trello_obj:
-                trello_obj.create_board()
-        except Exception as e:
-            logger.critical(str(e))
+        trello_obj = Trello(key=TRELLO_KEY, token=TRELLO_TOKEN)
+        # Create board
+        new_board_id = trello_obj.create_board(TRELLO_BOARD_NAME)
+        # Add members to board
+        trello_obj.add_members_to_board(new_board_id, TRELLO_MEMBERS)
     else:
-        parser.print_usage() 
+        parser.print_usage()
