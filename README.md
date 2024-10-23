@@ -13,6 +13,7 @@ The setup has two parts:
 2. Create Env variables
 
 __1. Prerequisites__
+
 a) Install Python 3.x
 
 b) Add Python 3.x to your PATH environment variable
