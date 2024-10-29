@@ -2,9 +2,12 @@ name: Create Trello Board
 
 # Controls when the action will run: whenever there's a push to the main branch
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:  # Trigger the workflow manually
+    inputs:
+      board_name:
+        description: 'Board name'
+        required: true
+        type: string
 
 # Define the jobs that will be run
 jobs:
@@ -36,4 +39,4 @@ jobs:
       # Step 4: Run your Python script
       - name: Run script
         run: |
-          python trello.py --create
+          python trello.py --create ${{ inputs.board_name }}
