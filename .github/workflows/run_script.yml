@@ -2,6 +2,10 @@ name: Create Trello Board
 
 # Controls when the action will run: whenever there's a push to the main branch
 on:
+  push:
+    branches:
+      - master
+      - board-name-update
   workflow_dispatch:  # Trigger the workflow manually
     inputs:
       board_name:
