@@ -81,6 +81,10 @@ if __name__ == '__main__':
                         action='store_true',
                         default=False,
                         help='--create will create a new board')
+    parser.add_argument("--board_name",
+                        dest="board_name",
+                        help="Enter the board name",
+                        default="Test Board")
     args = parser.parse_args()
 
 	# Get the key, token, members & board_name from env
@@ -88,12 +92,11 @@ if __name__ == '__main__':
     TRELLO_TOKEN = os.environ.get("TRELLO_TOKEN")
     TRELLO_MEMBERS = os.environ.get("TRELLO_MEMBERS") # should be a comma seperated value
     TRELLO_MEMBERS = TRELLO_MEMBERS.split(',')
-    TRELLO_BOARD_NAME = "Test Board"
 
     if args.create:
         trello_obj = Trello(key=TRELLO_KEY, token=TRELLO_TOKEN)
         # Create board
-        new_board_id = trello_obj.create_board(TRELLO_BOARD_NAME)
+        new_board_id = trello_obj.create_board(args.board_name)
         # Add members to board
         trello_obj.add_members_to_board(new_board_id, TRELLO_MEMBERS)
     else:
