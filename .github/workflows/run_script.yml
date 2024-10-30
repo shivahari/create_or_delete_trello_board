@@ -43,4 +43,4 @@ jobs:
       # Step 4: Run your Python script
       - name: Run script
         run: |
-          python trello.py --create ${{ inputs.board_name }}
+          python trello.py --create "${{ github.event.inputs.board_name }}"
