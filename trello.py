@@ -92,7 +92,6 @@ if __name__ == '__main__':
     TRELLO_TOKEN = os.environ.get("TRELLO_TOKEN")
     TRELLO_MEMBERS = os.environ.get("TRELLO_MEMBERS") # should be a comma seperated value
     TRELLO_MEMBERS = TRELLO_MEMBERS.split(',')
-    #TRELLO_BOARD_NAME = "Test Board"
 
     if args.create:
         trello_obj = Trello(key=TRELLO_KEY, token=TRELLO_TOKEN)
